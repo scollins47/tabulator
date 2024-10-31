@@ -60,17 +60,7 @@ def on_press(key):
         if key == keyboard.Key.up:
             cursor.move_up()
         if key == keyboard.Key.enter:
-            #somehow need to lock ascii table here to paint (lock whenever you paint)
-            if len(ascii_table[cursor.y]) < len(cursor.buffer) + cursor.x:
-                add_empty_bar(ascii_table, len(cursor.buffer) * 2)
-
-
-            # ascii_table[cursor.y][cursor.x] = "".join(cursor.buffer)
-            for i in range(len(cursor.buffer)):
-                ascii_table[cursor.y + i][cursor.x] = cursor.buffer[i]
-                cursor.x += 1
-
-
+            cursor.flush()
             # print_ascii(ascii_table)
         
         if key.char == 'q':
@@ -114,9 +104,18 @@ def print_ascii(ascii: list[list[str]]) -> None:
             ascii[cursor.y][0] = '>'
         else:
             ascii[i][0] = ' '
-        # -----------------------------------
+        # -----------for-additions-----------------------
+        
+        if cursor.is_flushing:
+            if len(ascii_table[cursor.y]) < len(cursor.buffer) + cursor.x:
+                add_empty_bar(ascii_table, len(cursor.buffer) * 2)
+            for i in range(len(cursor.buffer)):
+                ascii_table[cursor.y + i][cursor.x] = cursor.buffer[i]
+                cursor.x += 1
+        
+            cursor.is_flushing = False
 
-        #----------writing the frets-------------------
+        #----------"printing" the frets-------------------
         for j in range(len(ascii[0])):
             temp.write(ascii[i][j])
         temp.write('\n')
