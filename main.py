@@ -99,6 +99,9 @@ def setup(tab: StringIO) -> tuple[list[list[str]], str]:
     return lines, tab.getvalue()
 
 def print_ascii(ascii_table: list[list[str]] = None) -> None:
+    cursor.print_x()
+    print_line(len(ascii_table[0]) + 1)
+
     temp = StringIO()
     for i in range(len(ascii_table)):
         # to get the cursor in the right place
@@ -170,8 +173,7 @@ def main():
 
         print()
         print()
-        cursor.print_x()
-        print_line(len(ascii_table[0]) + 1)
+
         print_ascii(ascii_table)
         print(f'\n IN BUFFER: {"".join(cursor.buffer)}')
         if enter_mode: print(f'Writing...') 
