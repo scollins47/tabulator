@@ -1,4 +1,4 @@
-from pynput import keyboard # type: ignore
+from pynput import keyboard 
 import signal 
 import sys
 from time import sleep
@@ -18,19 +18,43 @@ by decoupled functions controlling a single, global ascii 2d array
 option two
 
 master/slave relation ship with threads or even processes 
+
+
+
+___________________________________________________________________
+  e|-0---0------/7--7----2-3-2--0----------------------------------
+> B|----------------------3----------------------------------------
+  D|---------------------------------------------------------------
+  G|---2-2-----0---------------------------------------------------
+  A|---------------------0-----------------------------------------
+  E|-0--------------------------0----------------------------------
 """
+
+def read_from_file(filename):
+    f = open(filename, 'r')
+    ascii_table
+    for line in filename:
+        for char in line:
+            ascii_table[0]
+
 
 def on_press(key):
     global enter_mode
     try:
+        if enter_mode:
+            try: cursor.to_write(key.char) 
+            except AttributeError as ex: pass
         if key == keyboard.Key.space:
             if enter_mode == True:
                 enter_mode = False
-                print('added to buffer')
+                print("Written")
             else: 
+                print("Adding to buffer...")
                 enter_mode = True
         if key == keyboard.Key.left:
             cursor.move_left()
+        if key == keyboard.Key.backspace:
+            ascii_table[cursor.y][cursor.x] = '-'
         if key == keyboard.Key.right:
             cursor.move_right()
         if key == keyboard.Key.down:
@@ -39,17 +63,20 @@ def on_press(key):
             cursor.move_up()
         if key == keyboard.Key.enter:
             cursor.flush()
-        if enter_mode:
-            try:
-                if key.char:
-                    cursor.to_write(key.char)
-            except AttributeError:
-                pass
-
+            print_ascii(ascii_table=ascii_table)
+        
         if key.char == 'q':
             print("quitting...")
     except AttributeError as ex:
         pass
+    except Exception as e:
+        print(f"""
+    DEBUG OUTPUT 
+        CURSOR X: {cursor.x}, CURSOR Y: {cursor.y} 
+        problem child: ascii_table[{cursor.y}][{cursor.x}]
+
+""")
+        raise(e)
 
 
 def print_line(multiple_of_measure_length=0):
@@ -71,24 +98,33 @@ def setup(tab: StringIO) -> tuple[list[list[str]], str]:
         tab.write('\n')
     return lines, tab.getvalue()
 
-def print_ascii(ascii: list[list[str]]) -> None:
+def print_ascii(ascii_table: list[list[str]] = None) -> None:
     temp = StringIO()
-    for i in range(len(ascii)):
+    for i in range(len(ascii_table)):
         # to get the cursor in the right place
         if i == cursor.y:
-            ascii[cursor.y][0] = '>'
+            ascii_table[cursor.y][0] = '>'
         else:
-            ascii[i][0] = ' '
-        # -----------------------------------
-
+            ascii_table[i][0] = ' '
+        # -----------for-additions-----------------------
+        
         if cursor.is_flushing:
-            ascii[cursor.y][cursor.x] = "".join(cursor.buffer)
+            if len(ascii_table[cursor.y]) < 2 - cursor.x:
+                add_empty_bar(ascii_table, 10)
+            
+            print(len(cursor.buffer))
+            if len(cursor.buffer) == 1 and not cursor.buffer[0].isnumeric():
+                ascii_table[cursor.y][cursor.x + 1] = cursor.buffer[i]
+                ascii_table[cursor.y][cursor.x + 2] = '|'
+            for i in range(len(cursor.buffer)):
+                ascii_table[cursor.y][cursor.x + 1] = cursor.buffer[i]
+                cursor.x += 1
             cursor.buffer = []
             cursor.is_flushing = False
 
-        #----------writing the frets-------------------
-        for j in range(len(ascii[0])):
-            temp.write(ascii[i][j])
+        #----------"printing" the frets-------------------
+        for j in range(len(ascii_table[0])):
+            temp.write(ascii_table[i][j])
         temp.write('\n')
 
     printer(temp.getvalue())
@@ -98,15 +134,18 @@ def printer(printable: str):
     print(printable)
 
 
-def add_empty_bar(ascii):
+def add_empty_bar(ascii:list[list[str]], n_bars:int=1):
+    if n_bars < 1:
+        return ascii
     for i in range(len(ascii)):
-        ascii[i].append('-')
+        for j in range(n_bars):
+            ascii[i].append('-')
     return ascii
 
 
 def main():
+
     tab = StringIO()
-    ascii_tab, printable_tab = setup(tab)
     printer("""
             Press SPACEBAR to enter "enter mode"
             wherein you can type any number of characters (ex. 14)
@@ -123,16 +162,17 @@ def main():
     while True:
         if old_pos == cursor.x and old_posy == cursor.y: continue
         else:
-            if cursor.x > len(ascii_tab[0]):
-                add_empty_bar(ascii=ascii_tab)
+            if cursor.x > len(ascii_table[0]):
+                add_empty_bar(ascii_table, 4)
+
             old_pos = cursor.x
             old_posy = cursor.y
 
         print()
         print()
         cursor.print_x()
-        print_line(len(ascii_tab[0]) + 1)
-        print_ascii(ascii_tab)
+        print_line(len(ascii_table[0]) + 1)
+        print_ascii(ascii_table)
         print(f'\n IN BUFFER: {"".join(cursor.buffer)}')
         if enter_mode: print(f'Writing...') 
 
@@ -142,7 +182,7 @@ def main():
 if __name__ == '__main__':
     ascii_table, _ = setup(StringIO())
 
-    cursor = Cursor(0, 0)
+    cursor = Cursor(0, 2)
     enter_mode = False
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
