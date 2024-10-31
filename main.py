@@ -26,9 +26,9 @@ def on_press(key):
         if key == keyboard.Key.space:
             if enter_mode == True:
                 enter_mode = False
+                print('added to buffer')
             else: 
                 enter_mode = True
-            print(enter_mode)
         if key == keyboard.Key.left:
             cursor.move_left()
         if key == keyboard.Key.right:
@@ -108,10 +108,14 @@ def main():
     tab = StringIO()
     ascii_tab, printable_tab = setup(tab)
     printer("""
-            Press space to enter "enter mode"
+            Press SPACEBAR to enter "enter mode"
             wherein you can type any number of characters (ex. 14)
-            press space when you're done to print it to the tab.
+            press SPACEBAR when you're done to add it to the buffer.
 
+            To actually print the tab, press ENTER to write whatever -
+            - is in your buffer to the tab
+
+            ps. resize to the top of this msg for the best experience
             Press any button to begin....
             """)
     old_pos = cursor.x
