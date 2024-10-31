@@ -21,8 +21,9 @@ class Cursor:
         return self.buffer
 
     def move_left(self) -> int:
-        if self.x > 0:
+        if self.x > 1:
             self.x -=1
+        else: self.x = 1
         return self.x
 
     def move_down(self) -> int:
@@ -39,7 +40,7 @@ class Cursor:
     def print_x(self) -> str:
         line = StringIO()
         line.write(" ")
-        line.write(" ") # buffer
+        # line.write(" ") # buffer
         for i in range(self.x):
             line.write(" ")
         line.write("v")

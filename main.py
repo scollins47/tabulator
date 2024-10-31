@@ -41,18 +41,20 @@ def read_from_file(filename):
 def on_press(key):
     global enter_mode
     try:
-        if enter_mode and key == keyboard.Key.space:
-            try: cursor.buffer.append(key.char) 
-            except AttributeError as e:
-                pass
+        if enter_mode:
+            try: cursor.to_write(key.char) 
+            except AttributeError as ex: pass
         if key == keyboard.Key.space:
             if enter_mode == True:
                 enter_mode = False
-                print('added to buffer')
+                print("Written")
             else: 
+                print("Adding to buffer...")
                 enter_mode = True
         if key == keyboard.Key.left:
             cursor.move_left()
+        if key == keyboard.Key.backspace:
+            ascii_table[cursor.y][cursor.x] = '-'
         if key == keyboard.Key.right:
             cursor.move_right()
         if key == keyboard.Key.down:
@@ -61,7 +63,7 @@ def on_press(key):
             cursor.move_up()
         if key == keyboard.Key.enter:
             cursor.flush()
-            # print_ascii(ascii_table)
+            print_ascii(ascii_table=ascii_table)
         
         if key.char == 'q':
             print("quitting...")
@@ -96,28 +98,33 @@ def setup(tab: StringIO) -> tuple[list[list[str]], str]:
         tab.write('\n')
     return lines, tab.getvalue()
 
-def print_ascii(ascii: list[list[str]]) -> None:
+def print_ascii(ascii_table: list[list[str]] = None) -> None:
     temp = StringIO()
-    for i in range(len(ascii)):
+    for i in range(len(ascii_table)):
         # to get the cursor in the right place
         if i == cursor.y:
-            ascii[cursor.y][0] = '>'
+            ascii_table[cursor.y][0] = '>'
         else:
-            ascii[i][0] = ' '
+            ascii_table[i][0] = ' '
         # -----------for-additions-----------------------
         
         if cursor.is_flushing:
-            if len(ascii_table[cursor.y]) < len(cursor.buffer) + cursor.x:
-                add_empty_bar(ascii_table, len(cursor.buffer) * 2)
+            if len(ascii_table[cursor.y]) < 2 - cursor.x:
+                add_empty_bar(ascii_table, 10)
+            
+            print(len(cursor.buffer))
+            if len(cursor.buffer) == 1 and not cursor.buffer[0].isnumeric():
+                ascii_table[cursor.y][cursor.x + 1] = cursor.buffer[i]
+                ascii_table[cursor.y][cursor.x + 2] = '|'
             for i in range(len(cursor.buffer)):
-                ascii_table[cursor.y + i][cursor.x] = cursor.buffer[i]
+                ascii_table[cursor.y][cursor.x + 1] = cursor.buffer[i]
                 cursor.x += 1
-        
+            cursor.buffer = []
             cursor.is_flushing = False
 
         #----------"printing" the frets-------------------
-        for j in range(len(ascii[0])):
-            temp.write(ascii[i][j])
+        for j in range(len(ascii_table[0])):
+            temp.write(ascii_table[i][j])
         temp.write('\n')
 
     printer(temp.getvalue())
@@ -156,7 +163,8 @@ def main():
         if old_pos == cursor.x and old_posy == cursor.y: continue
         else:
             if cursor.x > len(ascii_table[0]):
-                add_empty_bar(ascii=ascii_table)
+                add_empty_bar(ascii_table, 4)
+
             old_pos = cursor.x
             old_posy = cursor.y
 
@@ -174,7 +182,7 @@ def main():
 if __name__ == '__main__':
     ascii_table, _ = setup(StringIO())
 
-    cursor = Cursor(0, 0)
+    cursor = Cursor(0, 2)
     enter_mode = False
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
